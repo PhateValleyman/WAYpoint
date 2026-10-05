@@ -1,0 +1,35 @@
+{
+  "format_version": 2,
+  "header": {
+    "name": "WAYpoint",
+    "description": "Save your favourite places as waypoints and teleport to any of them with a GTA 5 style character switch.",
+    "uuid": "713f53df-1881-4b16-9892-8c0ed0898064",
+    "version": [
+      1,
+      0,
+      1
+    ],
+    "min_engine_version": [
+      1,
+      21,
+      100
+    ]
+  },
+  "modules": [
+    {
+      "type": "resources",
+      "uuid": "f0597036-9cd0-47e6-91e6-3bfb64c7ecb1",
+      "version": [
+        1,
+        0,
+        1
+      ]
+    }
+  ],
+  "metadata": {
+    "product_type": "addon",
+    "authors": [
+      "Voxen"
+    ]
+  }
+}

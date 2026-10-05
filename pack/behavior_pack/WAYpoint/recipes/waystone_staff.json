@@ -1,0 +1,31 @@
+{
+  "format_version": "1.20.10",
+  "minecraft:recipe_shaped": {
+    "description": {
+      "identifier": "voxen:waystone_staff"
+    },
+    "tags": [
+      "crafting_table"
+    ],
+    "unlock": {
+      "context": "AlwaysUnlocked"
+    },
+    "pattern": [
+      "E",
+      "S",
+      "S"
+    ],
+    "key": {
+      "E": {
+        "item": "minecraft:ender_pearl"
+      },
+      "S": {
+        "item": "minecraft:stick"
+      }
+    },
+    "result": {
+      "item": "voxen:waystone_staff",
+      "count": 1
+    }
+  }
+}

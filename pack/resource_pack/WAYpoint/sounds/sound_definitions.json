@@ -1,0 +1,268 @@
+{
+  "format_version": "1.14.0",
+  "sound_definitions": {
+    "voxen.cinematic.camera_out": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/cinematic/camera_out",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.cinematic.zoom_out_short": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/cinematic/zoom_out_short",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.cinematic.zoom_out_short_2": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/cinematic/zoom_out_short",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.cinematic.zoom_out_long": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/cinematic/zoom_out_long",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.cinematic.teleport": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/cinematic/teleport",
+          "volume": 1.0,
+          "stream": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.cinematic.zoom_in_short": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/cinematic/zoom_in_short",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.cinematic.zoom_in_short_2": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/cinematic/zoom_in_short",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.cinematic.zoom_in_long": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/cinematic/zoom_in_long",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.cinematic.camera_in": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/cinematic/camera_in",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.camera_out": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/camera_out",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.zoom_out_short": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/zoom_out_short",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.zoom_out_short_2": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/zoom_out_short_2",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.zoom_out_long": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/zoom_out_long",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.teleport": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/teleport",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.zoom_in_short": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/zoom_in_short",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.zoom_in_short_2": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/zoom_in_short_2",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.zoom_in_long": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/zoom_in_long",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.camera_in": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/camera_in",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.waystone_activated": {
+      "category": "block",
+      "sounds": [
+        {
+          "name": "sounds/classic/waystone_activated",
+          "volume": 1.0,
+          "load_on_low_memory": true
+        }
+      ]
+    },
+    "voxen.classic.quiet_teleport": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/quiet_teleport",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.quiet_zoom_in_short": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/quiet_zoom_in_short",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.quiet_zoom_in_short_2": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/quiet_zoom_in_short_2",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.quiet_zoom_in_long": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/quiet_zoom_in_long",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    },
+    "voxen.classic.quiet_camera_in": {
+      "category": "player",
+      "sounds": [
+        {
+          "name": "sounds/classic/quiet_camera_in",
+          "volume": 1.0,
+          "load_on_low_memory": true,
+          "is3D": false
+        }
+      ]
+    }
+  }
+}
