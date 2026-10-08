@@ -46,3 +46,6 @@ make check    # validate JavaScript and JSON resources
 ## Visual control-stone UI
 
 The control-stone menus use icon-first buttons: ender pearl for teleport, compass for moving, rotate/flip icons for transforms, refresh for replacing, name tag for naming, and trash/check icons for removal confirmation. Text labels remain short fallbacks for players who can read.
+
+
+Rotation and replacement submenus now also use image buttons for each selectable option, not only the top-level control menu.
