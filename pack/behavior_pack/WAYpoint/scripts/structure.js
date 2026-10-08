@@ -1,6 +1,5 @@
-import { system } from "@minecraft/server";
 import { STRUCTURE_DIMENSIONS } from "./structure_dimensions.js";
-import { all, save, say, paint, BLOCK, TOP, dimOf } from "./lib.js";
+import { save, paint, BLOCK, TOP, dimOf } from "./lib.js";
 
 const ROTATIONS = ["0_degrees", "90_degrees", "180_degrees", "270_degrees"];
 const MIRRORS = ["none", "x", "z", "xz"];
@@ -28,6 +27,10 @@ function command(dim, command) {
   const result = dim.runCommand(command);
   if (result && result.successCount === 0) throw new Error(command);
 }
+function clearVolume(dim, point, size) {
+  command(dim, `fill ${point.x} ${point.y} ${point.z} ${point.x + size.x - 1} ${point.y + size.y - 1} ${point.z + size.z - 1} air`);
+  try { command(dim, `setblock ${point.x} ${point.y + 1} ${point.z} air`); } catch {}
+}
 function putAnchor(dim, entry) {
   const p = entry;
   command(dim, `setblock ${p.x} ${p.y} ${p.z} ${BLOCK} replace`);
@@ -41,12 +44,34 @@ export function loadAt(entry, structureId, rotation = 0, mirror = 0) {
   if (!dim || !item) throw new Error(`Unknown structure ${structureId}`);
   const p = `${entry.x} ${entry.y} ${entry.z}`;
   if (entry.s?.size) {
-    const old = entry.s.size;
-    try { command(dim, `fill ${entry.x} ${entry.y} ${entry.z} ${entry.x + old.x - 1} ${entry.y + old.y - 1} ${entry.z + old.z - 1} air`); } catch {}
+    try { clearVolume(dim, entry, entry.s.size); } catch {}
   }
   command(dim, `structure load ${structureId} ${p} ${ROTATIONS[rotation] ?? ROTATIONS[0]} ${MIRRORS[mirror] ?? MIRRORS[0]}`);
   putAnchor(dim, entry);
   entry.s = { id: structureId, n: item.name, size: effectiveSize(item.size, rotation), source: item.size, r: rotation, m: mirror };
+  save();
+}
+export function moveStructure(entry, location) {
+  if (!entry.s) return;
+  const dim = dimOf(entry.d);
+  if (!dim) throw new Error("Dimension unavailable");
+  const old = { x: entry.x, y: entry.y, z: entry.z };
+  const target = { x: Math.floor(location.x), y: Math.floor(location.y), z: Math.floor(location.z) };
+  if (old.x === target.x && old.y === target.y && old.z === target.z) return;
+  const snapshot = { ...entry.s };
+  try {
+    clearVolume(dim, old, snapshot.size);
+    entry.x = target.x;
+    entry.y = target.y;
+    entry.z = target.z;
+    loadAt(entry, snapshot.id, snapshot.r ?? 0, snapshot.m ?? 0);
+  } catch (error) {
+    entry.x = old.x;
+    entry.y = old.y;
+    entry.z = old.z;
+    try { loadAt(entry, snapshot.id, snapshot.r ?? 0, snapshot.m ?? 0); } catch {}
+    throw error;
+  }
   save();
 }
 export function removeStructure(entry) {

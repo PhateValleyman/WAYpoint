@@ -146,3 +146,9 @@ Waypoint je zároveň kontrolní kámen pro struktury. Po klepnutí na uložený
 Novou strukturu stačí vložit jako `.mcstructure` do `BP/structures`. Při `make`, `make scan` nebo balení add-onu se automaticky načtou rozměry a vytvoří runtime katalog; není potřeba upravovat JavaScript, seznam kategorií ani ručně zadávat rozměry. Soubory s příponou `_x.mcstructure` jsou brány jako volitelné terénní podložky a v menu se nezobrazují.
 
 Bedrock skripty nemají přístup k souborovému systému add-onu za běhu, proto je automatická detekce řešena při buildu pomocí `tools/scan_structures.py`.
+
+### Ikona a automatická aktivace
+
+Behavior pack i resource pack používají stejnou ikonu. Oba manifesty mají vzájemnou závislost, takže aktivace jednoho packu automaticky aktivuje i druhý.
+
+Menu struktur používá obrazový náhled kontrolního kamene místo čistě textového seznamu. Každá načtená struktura dostane po postavení kontrolní kámen na svém rohovém bodě. Ten zůstává waypointem a zároveň dovoluje strukturu znovu postavit, změnit otočení/zrcadlení, přesunout ke hráči nebo odstranit.

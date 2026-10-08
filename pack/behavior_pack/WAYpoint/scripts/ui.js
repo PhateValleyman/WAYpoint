@@ -7,10 +7,11 @@ import {
 } from "./lib.js";
 import { STYLES, activate, portalSoundOn, preview, setPortalSound, setStyle, styleOf } from "./sound.js";
 import { travel, warping } from "./warp.js";
-import { formatSize, loadAt, mirrors, pageSize, rebuild, removeStructure, rotations, structureLabel, structures } from "./structure.js";
+import { formatSize, loadAt, mirrors, moveStructure, pageSize, rebuild, removeStructure, rotations, structureLabel, structures } from "./structure.js";
 
 const ICON = {
-  build: "textures/items/iron_pickaxe",
+  build: "textures/ui/structure_icon",
+  structure: "textures/ui/structure_icon",
   settings: "textures/ui/settings_glyph_color_2x",
   rename: "textures/items/name_tag",
   remove: "textures/ui/icon_trash",
@@ -168,7 +169,7 @@ async function structureMenu(player, entry) {
     const form = new ActionFormData().title("Struktury")
       .body(`Vyber strukturu, jejíž roh bude kotvit tento kontrolní kámen.\n${list.length} dostupných struktur · strana ${page + 1}/${pages}`)
       .button("« Zpět", ICON.back);
-    for (const item of slice) form.button(structureLabel(item), ICON.build);
+    for (const item of slice) form.button(structureLabel(item), ICON.structure);
     if (page > 0) form.button("‹ Předchozí");
     if (page + 1 < pages) form.button("Další ›");
     const res = await show(form, player);
@@ -194,10 +195,11 @@ async function editStructureMenu(player, entry) {
     .button("Znovu postavit", ICON.build)
     .button("Otočení", ICON.settings)
     .button("Zrcadlení", ICON.settings)
+    .button("Přesunout ke mně", ICON.structure)
     .button("Odstranit strukturu", ICON.remove)
     .button("« Zpět", ICON.back);
   const res = await show(form, player);
-  if (res.canceled || res.selection === 4) return;
+  if (res.canceled || res.selection === 5) return;
   if (res.selection === 0) {
     try { rebuild(entry); say(player, "§aStruktura byla znovu postavena."); } catch { say(player, "§cStrukturu se nepodařilo postavit."); }
   } else if (res.selection === 1 || res.selection === 2) {
@@ -209,6 +211,11 @@ async function editStructureMenu(player, entry) {
       try { loadAt(entry, entry.s.id, res.selection === 1 ? picked.selection : entry.s.r ?? 0, res.selection === 2 ? picked.selection : entry.s.m ?? 0); say(player, "§aNastavení struktury bylo změněno."); } catch { say(player, "§cStrukturu se nepodařilo upravit."); }
     }
   } else if (res.selection === 3) {
+    try {
+      moveStructure(entry, { x: Math.floor(player.location.x), y: Math.floor(player.location.y), z: Math.floor(player.location.z) });
+      say(player, "§aStruktura byla přesunuta ke tvé pozici. Kontrolní kámen zůstává teleportním cílem.");
+    } catch { say(player, "§cStrukturu se nepodařilo přesunout."); }
+  } else if (res.selection === 4) {
     removeStructure(entry);
     say(player, "§aStruktura byla odstraněna, kontrolní kámen zůstal.");
   }
