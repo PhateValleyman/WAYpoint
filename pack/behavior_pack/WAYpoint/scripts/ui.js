@@ -169,7 +169,7 @@ async function structureMenu(player, entry) {
     const form = new ActionFormData().title("Struktury")
       .body(`Vyber strukturu, jejíž roh bude kotvit tento kontrolní kámen.\n${list.length} dostupných struktur · strana ${page + 1}/${pages}`)
       .button("« Zpět", ICON.back);
-    for (const item of slice) form.button(structureLabel(item), ICON.structure);
+    for (const item of slice) form.button(structureLabel(item), item.icon ?? ICON.structure);
     if (page > 0) form.button("‹ Předchozí");
     if (page + 1 < pages) form.button("Další ›");
     const res = await show(form, player);

@@ -6,9 +6,22 @@ const MIRRORS = ["none", "x", "z", "xz"];
 const PAGE_SIZE = 20;
 const BUILTIN = Object.entries(STRUCTURE_DIMENSIONS)
   .filter(([id]) => !id.endsWith("_x"))
-  .map(([id, data]) => ({ id, size: data.size, name: prettyName(id) }))
+  .map(([id, data]) => ({ id, size: data.size, name: prettyName(id), icon: iconFor(id) }))
   .sort((a, b) => a.name.localeCompare(b.name));
 
+function iconFor(id) {
+  const name = id.toLowerCase();
+  if (name.includes("farm")) return "textures/items/wheat";
+  if (name.includes("car") || name.includes("truck") || name.includes("bus") || name.includes("airplane") || name.includes("helicopter") || name.includes("ship") || name.includes("taxi") || name.includes("tractor")) return "textures/items/minecart_normal";
+  if (name.includes("statue") || name.includes("head") || name.includes("pixelart")) return "textures/items/armor_stand";
+  if (name.includes("castle") || name.includes("tower") || name.includes("fort")) return "textures/blocks/stonebrick";
+  if (name.includes("fountain") || name.includes("pool") || name.includes("aquarium")) return "textures/items/bucket_water";
+  if (name.includes("portal") || name.includes("nether")) return "textures/blocks/netherrack";
+  if (name.includes("decoration") || name.includes("garden") || name.includes("tree")) return "textures/items/flower_poppy";
+  if (name.includes("beacon")) return "textures/items/nether_star";
+  if (name.includes("house") || name.includes("barn") || name.includes("garage") || name.includes("library")) return "textures/blocks/planks_oak";
+  return "textures/ui/structure_icon";
+}
 function prettyName(id) {
   const raw = id.includes(":") ? id.split(":").pop() : id;
   return raw.split(/[\\/_-]+/).filter(Boolean).map((part) => part[0].toUpperCase() + part.slice(1)).join(" ");
