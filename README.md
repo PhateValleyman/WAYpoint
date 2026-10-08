@@ -41,3 +41,8 @@ make check    # validate JavaScript and JSON resources
 - `pack/behavior_pack/WAYpoint/scripts/structure.js` — structure instances and control stones
 - `pack/behavior_pack/WAYpoint/scripts/warp.js` — cinematic teleport implementation
 - `tools/scan_structures.py` — build-time `.mcstructure` scanner
+
+
+## Visual control-stone UI
+
+The control-stone menus use icon-first buttons: ender pearl for teleport, compass for moving, rotate/flip icons for transforms, refresh for replacing, name tag for naming, and trash/check icons for removal confirmation. Text labels remain short fallbacks for players who can read.
