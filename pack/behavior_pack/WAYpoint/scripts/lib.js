@@ -4,11 +4,22 @@ export const STAFF = "voxen:waystone_staff";
 export const TOP = "voxen:waystone_top";
 export const STATE_ON = "voxen:on";
 const PROP = "voxen:structures";
+const FAVORITES_PROP = "voxen:structure_favorites";
 export const MAX_STONES = 256;
 export const DIM_NAME = { "minecraft:overworld":"Overworld", "minecraft:nether":"Nether", "minecraft:the_end":"End" };
 let cache;
 export function all() { if (cache) return cache; try { const raw=world.getDynamicProperty(PROP); cache=raw?JSON.parse(raw):[]; } catch { cache=[]; } if(!Array.isArray(cache)) cache=[]; cache=cache.filter(e=>e&&e.d&&Number.isInteger(e.x)&&Number.isInteger(e.y)&&Number.isInteger(e.z)); return cache; }
 export function save() { try { world.setDynamicProperty(PROP,JSON.stringify(all())); } catch {} }
+export function favorites() {
+  try { const raw = world.getDynamicProperty(FAVORITES_PROP); const list = raw ? JSON.parse(raw) : []; return Array.isArray(list) ? list : []; } catch { return []; }
+}
+export function isFavorite(id) { return favorites().includes(id); }
+export function toggleFavorite(id) {
+  const list = favorites(); const index = list.indexOf(id);
+  if (index >= 0) list.splice(index, 1); else list.push(id);
+  try { world.setDynamicProperty(FAVORITES_PROP, JSON.stringify(list)); } catch {}
+  return index < 0;
+}
 export function dimOf(id) { try{return world.getDimension(id);}catch{return undefined;} }
 export function dimName(id) { return DIM_NAME[id]??id.replace("minecraft:",""); }
 export function find(d,loc) { const x=Math.floor(loc.x),y=Math.floor(loc.y),z=Math.floor(loc.z); return all().find(e=>e.d===d&&e.x===x&&e.y===y&&e.z===z); }

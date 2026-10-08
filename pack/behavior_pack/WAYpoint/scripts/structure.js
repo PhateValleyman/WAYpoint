@@ -31,6 +31,7 @@ export function pageSize() { return PAGE_SIZE; }
 export function rotations() { return ROTATIONS; }
 export function mirrors() { return MIRRORS; }
 export function structureById(id) { return BUILTIN.find((item) => item.id === id); }
+export function orientedSize(id, rotation = 0) { const item = structureById(id); return item ? effectiveSize(item.size, rotation) : undefined; }
 
 function effectiveSize(size, rotation) {
   const swap = rotation === 1 || rotation === 3;

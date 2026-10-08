@@ -19,5 +19,21 @@ system.beforeEvents.startup.subscribe((ev)=>{
 function give(player,id,label){const stack=new ItemStack(id,1);const container=player.getComponent("minecraft:inventory")?.container;try{const left=container?.addItem(stack);if(!left){say(player,`Dostal jsi: ${label}.`);return;}}catch{}try{player.dimension.spawnItem(stack,player.location);say(player,`Dostal jsi: ${label}.`);}catch{say(player,"Inventář je plný.");}}
 function broke(e){const entry=find(e.dimension.id,e.block.location);if(entry)forget(entry);const up=neighbour(e.block,1);if(up?.typeId===TOP)setAir(up);}
 world.afterEvents.playerBreakBlock.subscribe((e)=>{const id=e.brokenBlockPermutation?.type?.id;if(id===BLOCK)broke(e);else if(id===TOP){const base=neighbour(e.block,-1);if(base?.typeId===BLOCK){broke({...e,block:base});setAir(base);}}});
-world.afterEvents.itemUse.subscribe((e)=>{if(e.itemStack?.typeId===STAFF&&e.source instanceof Player)system.run(()=>staffMenu(e.source));});
+const heldTools = new Map();
+const startUse = world.afterEvents.itemStartUse;
+if (startUse?.subscribe) startUse.subscribe((e) => {
+  if (e.itemStack?.typeId !== STAFF || !(e.source instanceof Player)) return;
+  const id = e.source.id;
+  const run = system.runTimeout(() => { heldTools.delete(id); staffMenu(e.source); }, 10);
+  heldTools.set(id, run);
+});
+const stopUse = world.afterEvents.itemStopUse;
+if (stopUse?.subscribe) stopUse.subscribe((e) => {
+  if (!(e.source instanceof Player)) return;
+  const run = heldTools.get(e.source.id);
+  if (run !== undefined) { system.clearRun(run); heldTools.delete(e.source.id); }
+});
+if (!startUse?.subscribe) world.afterEvents.itemUse.subscribe((e) => {
+  if (e.itemStack?.typeId === STAFF && e.source instanceof Player) system.run(() => staffMenu(e.source));
+});
 watch();

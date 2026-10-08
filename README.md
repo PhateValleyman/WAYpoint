@@ -49,3 +49,8 @@ The control-stone menus use icon-first buttons: ender pearl for teleport, compas
 
 
 Rotation and replacement submenus now also use image buttons for each selectable option, not only the top-level control menu.
+
+
+## Structure / Teleport Tool menu
+
+A long press opens four modes: **Teleport**, **Budování**, **Nastavení** and **Exit**. Teleport lists saved structure locations. Budování separates the structure catalog from persistent favorites. Moving and rotating structures show a particle hologram and require confirmation.
