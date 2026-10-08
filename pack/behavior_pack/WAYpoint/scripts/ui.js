@@ -7,8 +7,10 @@ import {
 } from "./lib.js";
 import { STYLES, activate, portalSoundOn, preview, setPortalSound, setStyle, styleOf } from "./sound.js";
 import { travel, warping } from "./warp.js";
+import { formatSize, loadAt, mirrors, pageSize, rebuild, removeStructure, rotations, structureLabel, structures } from "./structure.js";
 
 const ICON = {
+  build: "textures/items/iron_pickaxe",
   settings: "textures/ui/settings_glyph_color_2x",
   rename: "textures/items/name_tag",
   remove: "textures/ui/icon_trash",
@@ -145,6 +147,8 @@ export async function travelMenu(player, entry) {
     button(label(other, entry.d, entry), dimIcon(other.d), () => travel(player, other));
   }
 
+  button("Postavit strukturu", ICON.build ?? ICON.settings, () => structureMenu(player, entry));
+  if (entry.s) button(`Upravit strukturu\n${entry.s.n}`, ICON.settings, () => editStructureMenu(player, entry));
   button("Přejmenovat tento waystone", ICON.rename, () => nameMenu(player, entry));
   button("Nastavení", ICON.settings, () => settingsMenu(player, () => travelMenu(player, entry)));
   button("Odstranit tento waystone", ICON.remove, () => removeMenu(player, entry));
@@ -155,6 +159,60 @@ export async function travelMenu(player, entry) {
   await actions[res.selection]?.();
 }
 
+async function structureMenu(player, entry) {
+  const list = structures();
+  const pages = Math.max(1, Math.ceil(list.length / pageSize()));
+  let page = 0;
+  while (true) {
+    const slice = list.slice(page * pageSize(), (page + 1) * pageSize());
+    const form = new ActionFormData().title("Struktury")
+      .body(`Vyber strukturu, jejíž roh bude kotvit tento kontrolní kámen.\n${list.length} dostupných struktur · strana ${page + 1}/${pages}`)
+      .button("« Zpět", ICON.back);
+    for (const item of slice) form.button(structureLabel(item), ICON.build);
+    if (page > 0) form.button("‹ Předchozí");
+    if (page + 1 < pages) form.button("Další ›");
+    const res = await show(form, player);
+    if (res.canceled || res.selection === 0) return;
+    const selected = res.selection - 1;
+    if (selected >= 0 && selected < slice.length) {
+      try {
+        loadAt(entry, slice[selected].id);
+        say(player, `§aPostaveno: §f${slice[selected].name} §8(${formatSize(slice[selected].size)})`);
+      } catch { say(player, "§cStrukturu se nepodařilo načíst. Zkontroluj, že je v BP/structures."); }
+      return;
+    }
+    const after = selected - slice.length;
+    if (page > 0 && after === 0) { page--; continue; }
+    if (page + 1 < pages && after === (page > 0 ? 1 : 0)) { page++; continue; }
+    return;
+  }
+}
+async function editStructureMenu(player, entry) {
+  if (!entry.s) return structureMenu(player, entry);
+  const form = new ActionFormData().title("Upravit strukturu")
+    .body(`${entry.s.n}\nRoh: ${entry.x} ${entry.y} ${entry.z}\nRozměry: ${entry.s.size.x}×${entry.s.size.y}×${entry.s.size.z}`)
+    .button("Znovu postavit", ICON.build)
+    .button("Otočení", ICON.settings)
+    .button("Zrcadlení", ICON.settings)
+    .button("Odstranit strukturu", ICON.remove)
+    .button("« Zpět", ICON.back);
+  const res = await show(form, player);
+  if (res.canceled || res.selection === 4) return;
+  if (res.selection === 0) {
+    try { rebuild(entry); say(player, "§aStruktura byla znovu postavena."); } catch { say(player, "§cStrukturu se nepodařilo postavit."); }
+  } else if (res.selection === 1 || res.selection === 2) {
+    const values = res.selection === 1 ? rotations() : mirrors();
+    const choose = new ActionFormData().title(res.selection === 1 ? "Otočení" : "Zrcadlení");
+    values.forEach((value) => choose.button(value));
+    const picked = await show(choose, player);
+    if (!picked.canceled && picked.selection >= 0) {
+      try { loadAt(entry, entry.s.id, res.selection === 1 ? picked.selection : entry.s.r ?? 0, res.selection === 2 ? picked.selection : entry.s.m ?? 0); say(player, "§aNastavení struktury bylo změněno."); } catch { say(player, "§cStrukturu se nepodařilo upravit."); }
+    }
+  } else if (res.selection === 3) {
+    removeStructure(entry);
+    say(player, "§aStruktura byla odstraněna, kontrolní kámen zůstal.");
+  }
+}
 function label(entry, dimId, from) {
   const name = entry.p ? `${entry.n} (Soukromý)` : entry.n;
   if (entry.d !== dimId) return `${name}\n${dimName(entry.d)}`;

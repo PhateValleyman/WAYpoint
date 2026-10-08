@@ -133,3 +133,16 @@ The repository does not include a license file. If you plan to distribute the ad
 
 - **PhateValleyman** / **Voxen** — author of the add‑on.
 - The Minecraft Bedrock community for the scripting API possibilities.
+
+## Kontrolní kámen a struktury
+
+Waypoint je zároveň kontrolní kámen pro struktury. Po klepnutí na uložený kámen nabídne:
+
+- původní teleporty mezi waypointy,
+- výběr a postavení struktury z `pack/behavior_pack/WAYpoint/structures/`,
+- úpravu aktuální struktury (znovu postavit, otočit, zrcadlit nebo odstranit),
+- zachování kontrolního kamene na rohu každé struktury.
+
+Novou strukturu stačí vložit jako `.mcstructure` do `BP/structures`. Při `make`, `make scan` nebo balení add-onu se automaticky načtou rozměry a vytvoří runtime katalog; není potřeba upravovat JavaScript, seznam kategorií ani ručně zadávat rozměry. Soubory s příponou `_x.mcstructure` jsou brány jako volitelné terénní podložky a v menu se nezobrazují.
+
+Bedrock skripty nemají přístup k souborovému systému add-onu za běhu, proto je automatická detekce řešena při buildu pomocí `tools/scan_structures.py`.
