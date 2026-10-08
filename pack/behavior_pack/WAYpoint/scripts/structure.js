@@ -1,5 +1,5 @@
 import { STRUCTURE_DIMENSIONS } from "./structure_dimensions.js";
-import { save, paint, BLOCK, TOP, dimOf } from "./lib.js";
+import { add, save, paint, BLOCK, TOP, dimOf, find, all, forget } from "./lib.js";
 
 const ROTATIONS = ["0_degrees", "90_degrees", "180_degrees", "270_degrees"];
 const MIRRORS = ["none", "x", "z", "xz"];
@@ -105,3 +105,18 @@ export function rebuild(entry) {
 export function formatSize(size) { return `${size[0]}×${size[1]}×${size[2]}`; }
 export function structureLabel(item) { return `${item.name}\n§8${formatSize(item.size)}`; }
 export function structureCount() { return BUILTIN.length; }
+
+export function createStructure(dimId, location, structureId, name = "Struktura") {
+  const existing = find(dimId, location);
+  if (existing) return existing;
+  const entry = add(dimId, location, name);
+  loadAt(entry, structureId);
+  return entry;
+}
+export function renameStructure(entry, name) { entry.n = name; save(); }
+export function structuresInWorld() { return all().filter(e => e.s?.id); }
+export function removeStructureCompletely(entry) {
+  const dim = dimOf(entry.d);
+  if (dim && entry.s?.size) { try { clearVolume(dim, entry, entry.s.size); } catch {} }
+  forget(entry);
+}

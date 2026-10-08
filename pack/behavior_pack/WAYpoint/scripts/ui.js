@@ -1,185 +1,35 @@
 import { system } from "@minecraft/server";
 import { ActionFormData, FormCancelationReason, ModalFormData } from "@minecraft/server-ui";
-
-import {
-  MAX_NAME, MAX_STONES, add, all, cleanName, dimName, distance, find, forget,
-  freeName, nameTaken, ownedBy, paint, probe, save, say, visibleTo,
-} from "./lib.js";
+import { all, cleanName, dimName, distance, find, forget, paint, probe, save, say } from "./lib.js";
 import { STYLES, activate, portalSoundOn, preview, setPortalSound, setStyle, styleOf } from "./sound.js";
 import { travel, warping } from "./warp.js";
-import { formatSize, loadAt, mirrors, moveStructure, pageSize, rebuild, removeStructure, rotations, structureLabel, structures } from "./structure.js";
-
-const ICON = {
-  build: "textures/ui/structure_icon",
-  structure: "textures/ui/structure_icon",
-  settings: "textures/ui/settings_glyph_color_2x",
-  rename: "textures/items/name_tag",
-  remove: "textures/ui/icon_trash",
-  close: "textures/ui/cancel",
-  back: "textures/ui/arrow_dark_left_stretch",
-  keep: "textures/ui/check",
-  sounds: "textures/ui/sound_glyph_2x",
-  on: "textures/ui/toggle_on",
-  off: "textures/ui/toggle_off",
-};
-
-const DIM_ICON = {
-  "minecraft:overworld": "textures/blocks/grass_side_carried",
-  "minecraft:nether": "textures/blocks/netherrack",
-  "minecraft:the_end": "textures/blocks/end_stone",
-};
-
-function dimIcon(dimId) {
-  return DIM_ICON[dimId] ?? "textures/items/ender_pearl";
-}
-
-function sleep(ticks) {
-  return new Promise((done) => system.runTimeout(done, ticks));
-}
-
-async function show(form, player, tries = 8) {
-  for (let i = 0; i < tries; i++) {
-    const res = await form.show(player);
-    if (res.canceled && res.cancelationReason === FormCancelationReason.UserBusy) {
-      await sleep(10);
-      continue;
-    }
-    return res;
-  }
-  return { canceled: true };
-}
-
-export async function touch(player, dimId, location) {
-  if (warping(player)) return;
-  const entry = find(dimId, location);
-  if (entry && !visibleTo(entry, player)) {
-    say(player, `${entry.n} je soukromý waystone.`);
-    return;
-  }
-  if (entry) {
-    activate(player, player.dimension, entry);
-    await travelMenu(player, entry);
-    return;
-  }
-  if (all().length >= MAX_STONES) {
-    say(player, `Tento svět už obsahuje ${MAX_STONES} waystonů, což je maximum.`);
-    return;
-  }
-  await nameMenu(player, undefined, dimId, location);
-}
-
-async function nameMenu(player, entry, dimId, location) {
-  const spot = entry ? "Pojmenujte tento waystone" : "Pojmenujte tento waystone, abyste ho znovu našli.";
-
-  const canHide = !entry || ownedBy(entry, player);
-  const form = new ModalFormData()
-    .title(entry ? "Přejmenovat waystone" : "Nový waystone")
-    .textField(spot, entry ? "Název waystonu" : freeName(), entry
-      ? { defaultValue: entry.n, maxLength: MAX_NAME }
-      : { maxLength: MAX_NAME });
-  if (canHide) form.toggle("Soukromý waystone", { defaultValue: entry?.p === true });
-
-  const res = await show(form, player);
-  if (res.canceled) return;
-
-  const name = cleanName(res.formValues?.[0]) || (entry ? entry.n : freeName());
-  const hidden = canHide ? res.formValues?.[1] === true : entry?.p === true;
-  if (nameTaken(name, entry)) {
-    say(player, `Waystone s názvem ${name} už existuje.`);
-    return;
-  }
-
-  if (entry) {
-    entry.n = name;
-    if (hidden) entry.p = true;
-    else delete entry.p;
-    save();
-    say(player, `${name} je uložen jako ${hidden ? "soukromý" : "veřejný"} waystone.`);
-    return;
-  }
-
-  if (probe({ d: dimId, x: location.x, y: location.y, z: location.z }) === "gone") {
-    say(player, "Ten waystone byl zničen, než mohl být uložen.");
-    return;
-  }
-  if (find(dimId, location)) {
-    say(player, "Tento waystone už někdo jiný uložil.");
-    return;
-  }
-  if (all().length >= MAX_STONES) {
-    say(player, `Tento svět už obsahuje ${MAX_STONES} waystonů, což je maximum.`);
-    return;
-  }
-
-  const made = add(dimId, location, name, player.name, hidden);
-  paint(made, true);
-  say(player, `${name} je uložen jako ${hidden ? "soukromý" : "veřejný"} waystone. Klepnutím na něj znovu cestujte.`);
-}
-
-export async function travelMenu(player, entry) {
-  if (probe(entry) === "gone") {
-    forget(entry);
-    say(player, "Ten waystone je pryč.");
-    return;
-  }
-  paint(entry, true);
-
-  const others = all()
-    .filter((e) => e !== entry && visibleTo(e, player))
-    .sort((a, b) => {
-      if (a.d !== b.d) return a.d === entry.d ? -1 : 1;
-      return a.n.localeCompare(b.n);
-    });
-
-  const form = new ActionFormData()
-    .title("Waystone")
-    .body([
-      entry.p ? `${entry.n} (Soukromý)` : entry.n,
-      dimName(entry.d),
-      others.length
-        ? `${others.length} ${others.length === 1 ? "další waystone" : (others.length >= 2 && others.length <= 4 ? "další waystony" : "dalších waystonů")} k cestování.`
-        : "Zatím nebyl postaven žádný další waystone.",
-    ].join("\n"));
-
-  const actions = [];
-  const button = (text, icon, run) => { form.button(text, icon); actions.push(run); };
-
-  for (const other of others) {
-    button(label(other, entry.d, entry), dimIcon(other.d), () => travel(player, other));
-  }
-
-  button("Postavit strukturu", ICON.build ?? ICON.settings, () => structureMenu(player, entry));
-  if (entry.s) button(`Upravit strukturu\n${entry.s.n}`, ICON.settings, () => editStructureMenu(player, entry));
-  button("Přejmenovat tento waystone", ICON.rename, () => nameMenu(player, entry));
-  button("Nastavení", ICON.settings, () => settingsMenu(player, () => travelMenu(player, entry)));
-  button("Odstranit tento waystone", ICON.remove, () => removeMenu(player, entry));
-  button("Zavřít", ICON.close, () => {});
-
-  const res = await show(form, player);
-  if (res.canceled) return;
-  await actions[res.selection]?.();
-}
-
-async function structureMenu(player, entry) {
+import { createStructure, formatSize, loadAt, mirrors, moveStructure, pageSize, rebuild, removeStructure, removeStructureCompletely, renameStructure, rotations, structureLabel, structures, structuresInWorld } from "./structure.js";
+const ICON={build:"textures/ui/structure_icon",structure:"textures/ui/structure_icon",settings:"textures/ui/settings_glyph_color_2x",rename:"textures/items/name_tag",remove:"textures/ui/icon_trash",close:"textures/ui/cancel",back:"textures/ui/arrow_dark_left_stretch",keep:"textures/ui/check",sounds:"textures/ui/sound_glyph_2x",on:"textures/ui/toggle_on",off:"textures/ui/toggle_off"};
+const DIM_ICON={"minecraft:overworld":"textures/blocks/grass_side_carried","minecraft:nether":"textures/blocks/netherrack","minecraft:the_end":"textures/blocks/end_stone"};
+const dimIcon=d=>DIM_ICON[d]??ICON.structure;
+const sleep=t=>new Promise(r=>system.runTimeout(r,t));
+async function show(form,player,tries=8){for(let i=0;i<tries;i++){const r=await form.show(player);if(r.canceled&&r.cancelationReason===FormCancelationReason.UserBusy){await sleep(10);continue;}return r;}return{canceled:true};}
+export async function touch(player,dimId,location){if(warping(player))return;const entry=find(dimId,location);if(!entry){say(player,"Tento kámen vzniká automaticky jako součást struktury. Použij Structure/Teleport Tool.");return;}activate(player,player.dimension,entry);await structureMenu(player,entry);}
+function structureLabelWorld(e){return `${e.n}\n§8${e.s?.id??"Struktura"} · ${dimName(e.d)} · ${distance({x:0,y:0,z:0},e)} souřadnic`}
+export async function staffMenu(player){if(warping(player))return;const entries=structuresInWorld();const form=new ActionFormData().title("Structure / Teleport Tool").body(`Vyber strukturu k teleportu nebo ji spravuj.\nStruktur: ${entries.length}`).button("Postavit novou strukturu",ICON.build);for(const e of entries)form.button(structureLabelWorld(e),dimIcon(e.d));form.button("Nastavení",ICON.settings).button("Zavřít",ICON.close);const r=await show(form,player);if(r.canceled)return;if(r.selection===0){await structureMenu(player);return;}if(r.selection>0&&r.selection<=entries.length){await travel(player,entries[r.selection-1]);return;}if(r.selection===entries.length+1)await settingsMenu(player,()=>staffMenu(player));}
+async function structureMenu(player,entry){if(entry){if(probe(entry)==="gone"){forget(entry);say(player,"Kontrolní kámen struktury chybí, záznam byl odstraněn.");return;}paint(entry,true);}const list=structures();const pages=Math.max(1,Math.ceil(list.length/pageSize()));let page=0;while(true){if(entry){const form=new ActionFormData().title(`Struktura: ${entry.n}`).body(`${entry.s?.id??"Bez stavby"}\nKontrolní kámen je zároveň teleportní cíl.`).button("Teleportovat sem",ICON.structure).button("Upravit strukturu",ICON.settings).button("« Zpět",ICON.back);const r=await show(form,player);if(r.canceled||r.selection===2)return;if(r.selection===0){await travel(player,entry);return;}if(r.selection===1){await editStructureMenu(player,entry);return;}}const slice=list.slice(page*pageSize(),(page+1)*pageSize());const form=new ActionFormData().title("Postavit strukturu").body(`Každá stavba dostane automatický kontrolní kámen na rohu.\n${list.length} struktur · strana ${page+1}/${pages}`).button("« Zpět",ICON.back);for(const item of slice)form.button(structureLabel(item),item.icon??ICON.structure);if(page>0)form.button("‹ Předchozí");if(page+1<pages)form.button("Další ›");const r=await show(form,player);if(r.canceled||r.selection===0)return;const selected=r.selection-1;if(selected>=0&&selected<slice.length){const item=slice[selected];try{const made=createStructure(player.dimension.id,{x:Math.floor(player.location.x),y:Math.floor(player.location.y),z:Math.floor(player.location.z)},item.id);say(player,`§aPostaveno: §f${item.name}`);await editStructureMenu(player,made);}catch{say(player,"§cStrukturu se nepodařilo postavit.");}return;}const after=selected-slice.length;if(page>0&&after===0){page--;continue;}if(page+1<pages&&after===(page>0?1:0)){page++;continue;}return;}}
+async function editStructureMenu(player,entry){if(!entry?.s)return;const form=new ActionFormData().title(`Ovládání: ${entry.n}`).body(`${entry.s.id}\n${formatSize(entry.s.source)}\nKontrolní kámen: ${entry.x} ${entry.y} ${entry.z}`).button("Teleportovat",ICON.structure).button("Přesunout ke mně",ICON.structure).button("Otočit",ICON.settings).button("Zrcadlit",ICON.settings).button("Změnit strukturu",ICON.build).button("Pojmenovat",ICON.rename).button("Odstranit strukturu",ICON.remove).button("« Zpět",ICON.back);const r=await show(form,player);if(r.canceled||r.selection===7)return;if(r.selection===0){await travel(player,entry);return;}if(r.selection===1){try{moveStructure(entry,{x:Math.floor(player.location.x),y:Math.floor(player.location.y),z:Math.floor(player.location.z)});say(player,"§aStruktura přesunuta.");}catch{say(player,"§cPřesun se nepodařil.");}}else if(r.selection===2||r.selection===3){const values=r.selection===2?rotations():mirrors();const pick=await choose(player,r.selection===2?"Otočení":"Zrcadlení",values);if(pick>=0)try{loadAt(entry,entry.s.id,r.selection===2?pick:entry.s.r??0,r.selection===3?pick:entry.s.m??0);}catch{say(player,"§cÚprava se nepodařila.");}}else if(r.selection===4){await chooseStructure(player,entry);return;}else if(r.selection===5){const f=new ModalFormData().title("Pojmenovat strukturu").textField("Název","např. Domov",entry.n);const q=await show(f,player);if(!q.canceled){const n=cleanName(q.formValues?.[0]);if(n){renameStructure(entry,n);say(player,`§aStruktura se nyní jmenuje ${n}.`);}}}else if(r.selection===6){const q=new ActionFormData().title("Odstranit strukturu").body("Kontrolní kámen a teleportní cíl zůstanou.").button("Odstranit",ICON.remove).button("Zrušit",ICON.keep);const c=await show(q,player);if(!c.canceled&&c.selection===0){removeStructure(entry);say(player,"§aStruktura odstraněna; kontrolní kámen zůstal.");}}}
+async function chooseStructure(player, entry) {
   const list = structures();
   const pages = Math.max(1, Math.ceil(list.length / pageSize()));
   let page = 0;
   while (true) {
     const slice = list.slice(page * pageSize(), (page + 1) * pageSize());
-    const form = new ActionFormData().title("Struktury")
-      .body(`Vyber strukturu, jejíž roh bude kotvit tento kontrolní kámen.\n${list.length} dostupných struktur · strana ${page + 1}/${pages}`)
-      .button("« Zpět", ICON.back);
+    const form = new ActionFormData().title("Změnit strukturu").body("Vyber novou stavbu pro tento kontrolní kámen.").button("« Zpět", ICON.back);
     for (const item of slice) form.button(structureLabel(item), item.icon ?? ICON.structure);
     if (page > 0) form.button("‹ Předchozí");
     if (page + 1 < pages) form.button("Další ›");
-    const res = await show(form, player);
-    if (res.canceled || res.selection === 0) return;
-    const selected = res.selection - 1;
+    const r = await show(form, player);
+    if (r.canceled || r.selection === 0) return;
+    const selected = r.selection - 1;
     if (selected >= 0 && selected < slice.length) {
-      try {
-        loadAt(entry, slice[selected].id);
-        say(player, `§aPostaveno: §f${slice[selected].name} §8(${formatSize(slice[selected].size)})`);
-      } catch { say(player, "§cStrukturu se nepodařilo načíst. Zkontroluj, že je v BP/structures."); }
+      try { loadAt(entry, slice[selected].id); say(player, `§aStruktura změněna na: §f${slice[selected].name}`); }
+      catch { say(player, "§cStrukturu se nepodařilo změnit."); }
       return;
     }
     const after = selected - slice.length;
@@ -188,140 +38,6 @@ async function structureMenu(player, entry) {
     return;
   }
 }
-async function editStructureMenu(player, entry) {
-  if (!entry.s) return structureMenu(player, entry);
-  const form = new ActionFormData().title("Upravit strukturu")
-    .body(`${entry.s.n}\nRoh: ${entry.x} ${entry.y} ${entry.z}\nRozměry: ${entry.s.size.x}×${entry.s.size.y}×${entry.s.size.z}`)
-    .button("Znovu postavit", ICON.build)
-    .button("Otočení", ICON.settings)
-    .button("Zrcadlení", ICON.settings)
-    .button("Přesunout ke mně", ICON.structure)
-    .button("Odstranit strukturu", ICON.remove)
-    .button("« Zpět", ICON.back);
-  const res = await show(form, player);
-  if (res.canceled || res.selection === 5) return;
-  if (res.selection === 0) {
-    try { rebuild(entry); say(player, "§aStruktura byla znovu postavena."); } catch { say(player, "§cStrukturu se nepodařilo postavit."); }
-  } else if (res.selection === 1 || res.selection === 2) {
-    const values = res.selection === 1 ? rotations() : mirrors();
-    const choose = new ActionFormData().title(res.selection === 1 ? "Otočení" : "Zrcadlení");
-    values.forEach((value) => choose.button(value));
-    const picked = await show(choose, player);
-    if (!picked.canceled && picked.selection >= 0) {
-      try { loadAt(entry, entry.s.id, res.selection === 1 ? picked.selection : entry.s.r ?? 0, res.selection === 2 ? picked.selection : entry.s.m ?? 0); say(player, "§aNastavení struktury bylo změněno."); } catch { say(player, "§cStrukturu se nepodařilo upravit."); }
-    }
-  } else if (res.selection === 3) {
-    try {
-      moveStructure(entry, { x: Math.floor(player.location.x), y: Math.floor(player.location.y), z: Math.floor(player.location.z) });
-      say(player, "§aStruktura byla přesunuta ke tvé pozici. Kontrolní kámen zůstává teleportním cílem.");
-    } catch { say(player, "§cStrukturu se nepodařilo přesunout."); }
-  } else if (res.selection === 4) {
-    removeStructure(entry);
-    say(player, "§aStruktura byla odstraněna, kontrolní kámen zůstal.");
-  }
-}
-function label(entry, dimId, from) {
-  const name = entry.p ? `${entry.n} (Soukromý)` : entry.n;
-  if (entry.d !== dimId) return `${name}\n${dimName(entry.d)}`;
-  if (!from) return name;
-  const blocks = distance(from, entry);
-  return `${name}\n${blocks} ${blocks === 1 ? "blok" : (blocks >= 2 && blocks <= 4 ? "bloky" : "bloků")} daleko`;
-}
-
-export async function staffMenu(player) {
-  if (warping(player)) return;
-  const stones = all().filter((e) => visibleTo(e, player));
-  if (!stones.length) {
-    say(player, "Zatím nebyly umístěny žádné waystony.");
-    return;
-  }
-
-  const here = player.location;
-  const dimId = player.dimension.id;
-  const list = stones.slice().sort((a, b) => {
-    if (a.d !== b.d) {
-      if (a.d === dimId) return -1;
-      if (b.d === dimId) return 1;
-      return a.d.localeCompare(b.d);
-    }
-    return a.d === dimId ? distance(here, a) - distance(here, b) : a.n.localeCompare(b.n);
-  });
-
-  const form = new ActionFormData()
-    .title("Waystone hůl")
-    .body(`Vyberte waystone, kam cestovat.\nWaystony: ${list.length}`);
-  for (const entry of list) form.button(label(entry, dimId, here), dimIcon(entry.d));
-  form.button("Nastavení", ICON.settings);
-  form.button("Zavřít", ICON.close);
-
-  const res = await show(form, player);
-  if (res.canceled) return;
-  if (res.selection === list.length) {
-    await settingsMenu(player, () => staffMenu(player));
-    return;
-  }
-  const pick = list[res.selection];
-  if (pick) travel(player, pick);
-}
-
-async function settingsMenu(player, back) {
-  const current = styleOf(player);
-  const other = current === "cinematic" ? "classic" : "cinematic";
-  const portal = portalSoundOn(player);
-
-  const form = new ActionFormData().title("Nastavení");
-  const actions = [];
-  const button = (text, icon, run) => { form.button(text, icon); actions.push(run); };
-
-  button(`Zvuky teleportace\n${STYLES[current].tag}: ${STYLES[current].name}`, ICON.sounds, async () => {
-    setStyle(player, other);
-    preview(player, other);
-    await settingsMenu(player, back);
-  });
-  if (current === "classic") {
-    button(`Zvuk portálu ${portal ? "§a(ZAP)" : "§c(VYP)"}`, portal ? ICON.on : ICON.off, async () => {
-      setPortalSound(player, !portal);
-      await settingsMenu(player, back);
-    });
-  }
-  button("Zpět", ICON.back, back);
-
-  const res = await show(form, player);
-  if (res.canceled) return;
-  await actions[res.selection]?.();
-}
-
-async function removeMenu(player, entry) {
-  const form = new ActionFormData()
-    .title("Odstranit waystone")
-    .body(`${entry.n} bude zapomenut a nikdo sem už nebude moci cestovat.\nBlok samotný zůstane na místě.`)
-    .button("Odstranit", ICON.remove)
-    .button("Ponechat", ICON.keep);
-
-  const res = await show(form, player);
-  if (res.canceled || res.selection !== 0) return;
-
-  paint(entry, false);
-  forget(entry);
-  say(player, `${entry.n} už není cílem.`);
-}
-
-export async function listMenu(player) {
-  const stones = all().filter((e) => visibleTo(e, player));
-  if (!stones.length) {
-    say(player, "Zatím nebyly umístěny žádné waystony.");
-    return;
-  }
-
-  const lines = stones
-    .slice()
-    .sort((a, b) => (a.d === b.d ? a.n.localeCompare(b.n) : a.d.localeCompare(b.d)))
-    .map((e) => `${e.p ? `${e.n} (Soukromý)` : e.n}\n${dimName(e.d)}`);
-
-  const form = new ActionFormData()
-    .title("Waystony")
-    .body(`Waystony: ${stones.length}\n\n${lines.join("\n\n")}`)
-    .button("Zavřít", ICON.close);
-
-  await show(form, player);
-}
+async function choose(player,title,values){const f=new ActionFormData().title(title);for(const v of values)f.button(v);const r=await show(f,player);return r.canceled?-1:r.selection;}
+async function settingsMenu(player,back){const current=styleOf(player),other=current==="cinematic"?"classic":"cinematic",portal=portalSoundOn(player);const f=new ActionFormData().title("Nastavení").button(`Zvuky teleportace\n${STYLES[current].tag}: ${STYLES[current].name}`,ICON.sounds);if(current==="classic")f.button(`Zvuk portálu ${portal?"§a(ZAP)":"§c(VYP)"}`,portal?ICON.on:ICON.off);f.button("Zpět",ICON.back);const r=await show(f,player);if(r.canceled)return;if(r.selection===0){setStyle(player,other);preview(player,other);return settingsMenu(player,back);}if(current==="classic"&&r.selection===1){setPortalSound(player,!portal);return settingsMenu(player,back);}return back();}
+export async function listMenu(player){await staffMenu(player);}
